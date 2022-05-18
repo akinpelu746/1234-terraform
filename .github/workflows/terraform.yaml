@@ -25,7 +25,7 @@ jobs:
 
       - name: create env variable
         run: |
-            echo "{{ $steps.vars.outputs.id }}"
+            echo "${{ steps.vars.outputs.id }}"
             cat ${{ secrets[steps.vars.outputs.id] }} >> ~/.tfvars
             
       - name: Checkout

@@ -20,20 +20,9 @@ jobs:
             else
               IFS='-' read -r id string <<< "${{ github.ref_name }}"
               echo "entered"
-              echo "::set-output name=id::$string"
+              echo "::set-output name=secret::$string"
+              echo "::set-output name=path::$id"
             fi
-
-      - name: create env variable
-        run: |
-            echo "${{ steps.vars.outputs.id }}"
-            touch .tfvars
-            echo -e '${{ secrets[steps.vars.outputs.id] }}' >> .tfvars
-            cat .tfvars
-            
-
-      - name: check if variable exist
-        run: |
-            cat .tfvars
             
       - name: Checkout
         uses: actions/checkout@v3
@@ -41,9 +30,25 @@ jobs:
 
       - name: create env variable
         run: |
-            echo "${{ steps.vars.outputs.id }}"
-            echo -e '${{ secrets[steps.vars.outputs.id] }}' >> .tfvars
+            echo "${{ steps.vars.outputs.secret }}"
+            touch .tfvars
+            echo -e '${{ secrets[steps.vars.outputs.secret] }}' >> .tfvars
             cat .tfvars
+        working-directory: ${{ steps.vars.outputs.path }}
+            
+
+      - name: check if variable exist
+        run: |
+            cat .tfvars
+        working-directory: ${{ steps.vars.outputs.path }}
+
+      - name: create env variable
+        run: |
+            echo "${{ steps.vars.outputs.id }}"
+            echo -e '${{ secrets[steps.vars.outputs.secret] }}' >> .tfvars
+            cat .tfvars
+        working-directory: ${{ steps.vars.outputs.path }}
+
 
       - name: Set Up Terrform
         uses: hashicorp/setup-terraform@v2
@@ -51,11 +56,17 @@ jobs:
       - name: Terraform Validate
         id: validate
         run: terraform validate -no-color
+        working-directory: ${{ steps.vars.outputs.path }}
+
 
       - name: Terraform Plan
         id: plan
         run: terraform plan -var-file=".tfvars" -no-color -input=false
         continue-on-error: false
+        working-directory: ${{ steps.vars.outputs.path }}
+
         
       - name: Terraform Apply
         run: terraform apply  -var-file=".tfvars"  -auto-approve -input=false
+        working-directory: ${{ steps.vars.outputs.path }}
+

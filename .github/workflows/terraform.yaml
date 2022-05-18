@@ -21,6 +21,7 @@ jobs:
               IFS='-' read -r id string <<< "${{ github.ref_name }}"
               echo "entered"
               echo "::set-output name=secret::$string"
+              echo "::set-output name=backend::$string_backend"
               echo "::set-output name=path::$id"
             fi
             
@@ -32,6 +33,8 @@ jobs:
         run: |
             echo "${{ steps.vars.outputs.secret }}"
             touch terraform.tfvars
+            touch backend.tfvars
+            echo -e '${{ secrets[steps.vars.outputs.backend] }}' >> backend.tfvars
             echo -e '${{ secrets[steps.vars.outputs.secret] }}' >> terraform.tfvars
             cat terraform.tfvars
         working-directory: ${{ steps.vars.outputs.path }}
@@ -48,7 +51,7 @@ jobs:
  
       - name: Terraform Init
         id: Init
-        run: terraform init -backend-config="terraform.tfvars" -no-color
+        run: terraform init -backend-config="backend.tfvars" -no-color
         working-directory: ${{ steps.vars.outputs.path }}
 
 

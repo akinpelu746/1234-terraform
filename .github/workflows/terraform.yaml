@@ -61,7 +61,7 @@ jobs:
 
       - name: Terraform Validate
         id: validate
-        run: terraform validate -no-color
+        run: terraform validate -var-file=".tfvars" -no-color
         working-directory: ${{ steps.vars.outputs.path }}
 
 

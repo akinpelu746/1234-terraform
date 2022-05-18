@@ -26,7 +26,8 @@ jobs:
       - name: create env variable
         run: |
             echo "${{ steps.vars.outputs.id }}"
-            echo -e '${{ secrets[steps.vars.outputs.id] }}' >> ~/.tfvars
+            touch .tfvars
+            echo -e '${{ secrets[steps.vars.outputs.id] }}' >> .tfvars
             cat ~/.tfvars
             
 
@@ -37,6 +38,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+
+      - name: create env variable
+        run: |
+            echo "${{ steps.vars.outputs.id }}"
+            echo -e '${{ secrets[steps.vars.outputs.id] }}' >> ~/.tfvars
+            cat ~/.tfvars
+
       - name: Set Up Terrform
         uses: hashicorp/setup-terraform@v2
       
@@ -46,8 +54,8 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        run: terraform plan -var-file="~/.tfvars" -no-color -input=false
+        run: terraform plan -var-file=".tfvars" -no-color -input=false
         #continue-on-error: false
         
       - name: Terraform Apply
-        run: terraform apply  -var-file="~/.tfvars"  -auto-approve -input=false
+        run: terraform apply  -var-file=".tfvars"  -auto-approve -input=false

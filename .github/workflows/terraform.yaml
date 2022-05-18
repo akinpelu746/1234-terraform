@@ -20,8 +20,9 @@ jobs:
             else
               IFS='-' read -r id string <<< "${{ github.ref_name }}"
               echo "entered"
+              backend="${string}_BACKEND_CONFIG"
               echo "::set-output name=secret::$string"
-              echo "::set-output name=backend::$string_BACKEND_CONFIG"
+              echo "::set-output name=backend::$backend"
               echo "::set-output name=path::$id"
             fi
             

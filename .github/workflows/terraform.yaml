@@ -18,7 +18,7 @@ jobs:
             if [[ ! ${{ github.ref_name }} =~ [0-9]+-* ]]; then
               echo "The branch name doesn't follow a solution branch name format"
               exit 1
-            else:
+            else
               IFS='-' read -r id string <<< "$branch"
               echo "::set-output name=id::$string"
             fi
@@ -40,7 +40,7 @@ jobs:
       - name: Terraform Plan
         id: plan
         run: terraform plan -var-file=~/.tfvars -no-color -input=false
-        continue-on-error: false
+        #continue-on-error: false
         
       - name: Terraform Apply
         run: terraform apply  -var-file=~/.tfvars  -auto-approve -input=false

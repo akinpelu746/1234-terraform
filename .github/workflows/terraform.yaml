@@ -31,9 +31,9 @@ jobs:
       - name: create env variable
         run: |
             echo "${{ steps.vars.outputs.secret }}"
-            touch .tfvars
-            echo -e '${{ secrets[steps.vars.outputs.secret] }}' >> .tfvars
-            cat .tfvars
+            touch terraform.tfvars
+            echo -e '${{ secrets[steps.vars.outputs.secret] }}' >> terraform.tfvars
+            cat terraform.tfvars
         working-directory: ${{ steps.vars.outputs.path }}
             
 
@@ -45,8 +45,8 @@ jobs:
       - name: create env variable
         run: |
             echo "${{ steps.vars.outputs.id }}"
-            echo -e '${{ secrets[steps.vars.outputs.secret] }}' >> .tfvars
-            cat .tfvars
+            echo -e '${{ secrets[steps.vars.outputs.secret] }}' >> terraform.tfvars
+            cat terraform.tfvars
         working-directory: ${{ steps.vars.outputs.path }}
 
 
@@ -55,24 +55,24 @@ jobs:
  
       - name: Terraform Init
         id: Init
-        run: terraform init -var-file=".tfvars" -no-color
+        run: terraform init  -no-color
         working-directory: ${{ steps.vars.outputs.path }}
 
 
       - name: Terraform Validate
         id: validate
-        run: terraform validate -var-file=".tfvars" -no-color
+        run: terraform validate  -no-color
         working-directory: ${{ steps.vars.outputs.path }}
 
 
       - name: Terraform Plan
         id: plan
-        run: terraform plan -var-file=".tfvars" -no-color -input=false
+        run: terraform plan  -no-color -input=false
         continue-on-error: false
         working-directory: ${{ steps.vars.outputs.path }}
 
         
       - name: Terraform Apply
-        run: terraform apply  -var-file=".tfvars"  -auto-approve -input=false
+        run: terraform apply    -auto-approve -input=false
         working-directory: ${{ steps.vars.outputs.path }}
 

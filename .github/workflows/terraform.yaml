@@ -39,7 +39,7 @@ jobs:
 
       - name: check if variable exist
         run: |
-            cat .tfvars
+            cat terraform.tfvars
         working-directory: ${{ steps.vars.outputs.path }}
 
       - name: create env variable

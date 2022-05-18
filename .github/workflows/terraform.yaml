@@ -37,7 +37,7 @@ jobs:
             touch backend.tfvars
             echo -e '${{ secrets[steps.vars.outputs.backend] }}' >> backend.tfvars
             echo -e '${{ secrets[steps.vars.outputs.secret] }}' >> terraform.tfvars
-            cat terraform.tfvars
+            cat backend.tfvars
         working-directory: ${{ steps.vars.outputs.path }}
             
 

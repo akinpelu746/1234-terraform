@@ -28,7 +28,7 @@ jobs:
             echo "${{ steps.vars.outputs.id }}"
             touch .tfvars
             echo -e '${{ secrets[steps.vars.outputs.id] }}' >> .tfvars
-            cat ~/.tfvars
+            cat .tfvars
             
 
       - name: check if variable exist

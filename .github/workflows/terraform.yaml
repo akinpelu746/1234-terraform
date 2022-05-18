@@ -1,0 +1,46 @@
+name: "Terraform"
+
+on:
+  push:
+    paths:
+      - '**.tf'
+      - '**.tfvars'
+
+jobs:
+  terraform:
+    name: "Terraform"
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Exist if it's a solution branch
+        id:   vars
+        run: |
+            if [[ ! ${{ github.ref_name }} =~ [0-9]+-* ]]; then
+              echo "The branch name doesn't follow a solution branch name format"
+              exit 1
+            else:
+              IFS='-' read -r id string <<< "$branch"
+              echo "::set-output name=id::$string"
+            fi
+
+      - name: create env variable
+        run: |
+            cat ${{ secrets[steps.vars.outputs.id] }} >> ~/.tfvars
+            fi
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set Up Terrform
+      - uses: hashicorp/setup-terraform@v2
+      
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -var-file=~/.tfvars -no-color -input=false
+        continue-on-error: false
+        
+      - name: Terraform Apply
+        run: terraform apply  -var-file=~/.tfvars  -auto-approve -input=false

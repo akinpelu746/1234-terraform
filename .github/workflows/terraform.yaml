@@ -52,7 +52,13 @@ jobs:
 
       - name: Set Up Terrform
         uses: hashicorp/setup-terraform@v2
-      
+ 
+      - name: Terraform Init
+        id: Init
+        run: terraform init -no-color
+        working-directory: ${{ steps.vars.outputs.path }}
+
+
       - name: Terraform Validate
         id: validate
         run: terraform validate -no-color

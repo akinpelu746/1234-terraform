@@ -21,7 +21,7 @@ jobs:
               IFS='-' read -r id string <<< "${{ github.ref_name }}"
               echo "entered"
               echo "::set-output name=secret::$string"
-              echo "::set-output name=backend::$string_backend"
+              echo "::set-output name=backend::$string_BACKEND_CONFIG"
               echo "::set-output name=path::$id"
             fi
             

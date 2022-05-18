@@ -55,7 +55,7 @@ jobs:
  
       - name: Terraform Init
         id: Init
-        run: terraform init -no-color
+        run: terraform init -var-file=".tfvars" -no-color
         working-directory: ${{ steps.vars.outputs.path }}
 
 

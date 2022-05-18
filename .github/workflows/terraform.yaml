@@ -29,6 +29,11 @@ jobs:
             echo -e '${{ secrets[steps.vars.outputs.id] }}' >> ~/.tfvars
             cat ~/.tfvars
             
+
+      - name: check if variable exist
+        run: |
+            cat ~/.tfvars
+            
       - name: Checkout
         uses: actions/checkout@v3
 

@@ -18,7 +18,7 @@ jobs:
               echo "The branch name doesn't follow a solution branch name format"
               exit 1
             else
-              IFS='-' read -r id string <<< "$branch"
+              IFS='-' read -r id string <<< "${{ github.ref_name }}"
               echo "entered"
               echo "::set-output name=id::$string"
             fi

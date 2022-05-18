@@ -42,13 +42,6 @@ jobs:
             cat terraform.tfvars
         working-directory: ${{ steps.vars.outputs.path }}
 
-      - name: create env variable
-        run: |
-            echo "${{ steps.vars.outputs.id }}"
-            echo -e '${{ secrets[steps.vars.outputs.secret] }}' >> terraform.tfvars
-            cat terraform.tfvars
-        working-directory: ${{ steps.vars.outputs.path }}
-
 
       - name: Set Up Terrform
         uses: hashicorp/setup-terraform@v2

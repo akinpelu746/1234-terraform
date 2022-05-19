@@ -2,8 +2,10 @@ name: "Terraform"
 
 on:
   push:
-    branches:
-      - "*"
+    paths:
+      - '**.tf'
+      - '**.tfvars'
+
 
 jobs:
   terraform:

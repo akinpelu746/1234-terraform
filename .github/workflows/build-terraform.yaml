@@ -19,7 +19,7 @@ jobs:
               echo "The branch name doesn't follow a solution branch name format"
               exit 1
             else
-              IFS='-' read -r id string <<< "${{ github.ref_name }}"
+              IFS='-' read -r id string <<< "${{ github.base_ref }}"
               echo "entered"
               backend="${string}_backend_config"
               echo "::set-output name=secret::$string"

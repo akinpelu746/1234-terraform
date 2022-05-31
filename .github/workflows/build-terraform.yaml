@@ -15,7 +15,7 @@ jobs:
       - name: Exist if it's a solution branch
         id:   vars
         run: |
-            if [[ ! ${{ github.ref_name }} =~ [0-9]+-* ]]; then
+            if [[ ! ${{ github_base_ref	 }} =~ [0-9]+-* ]]; then
               echo "The branch name doesn't follow a solution branch name format"
               exit 1
             else

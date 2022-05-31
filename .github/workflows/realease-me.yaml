@@ -75,9 +75,9 @@ jobs:
 
 
       - name: Set up terraform release
-        if: ${{ steps.release.outputs.release_created }} && [[ [[ ${{ github.ref_name }} =~  terraform-* ]] || ${{ steps.path.outputs.release-type }} == "terraform-module" ]]
+        if: ${{ steps.release.outputs.release_created }}  && [[ ${{ github.ref_name }} =~  terraform-*  || ${{ steps.path.outputs.release-type }} == "terraform-module" ]]
         run: |
-         curl    -X POST  -H "Authorization: token $TOKEN"
+         curl  -X POST  -H "Authorization: token $TOKEN" \
          -H "Accept: application/vnd.github.v3+json" \
           https://api.github.com/repos/akinpelu746/1234-terraform/actions/workflows/deploy_terraform/dispatches \
          -d '{"ref": "${{ steps.path.outputs.tag_name }}"}'

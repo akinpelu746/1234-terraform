@@ -58,12 +58,15 @@ jobs:
       - name: Terraform Validate
         id: validate
         run: terraform validate -no-color
+        working-directory: ${{ steps.vars.outputs.path }}
+
 
       - name: Terraform Plan
         if: github.event_name == 'pull_request'
         id: plan
         run: terraform plan  -var-file=terraform.tfvars -no-color -input=false
         continue-on-error: false
+        working-directory: ${{ steps.vars.outputs.path }}
 
 
       - name: Update Pull Request

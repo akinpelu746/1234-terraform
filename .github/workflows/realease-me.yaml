@@ -74,7 +74,7 @@ jobs:
           version.md
 
 
-      - id: Set up terraform release
+      - name: Set up terraform release
         if: ${{ steps.release.outputs.release_created }} && [[ [[ ${{ github.ref_name }} =~  terraform-* ]] || ${{ steps.path.outputs.release-type }} == "terraform-module" ]]
         run: |
          curl    -X POST  -H "Authorization: token $TOKEN"
@@ -85,7 +85,7 @@ jobs:
           TOKEN:  ${{ secrets.PAT_TOKEN }}
 
 
-      - id: Set up terraform release
+      - name: Set up terraform release test
         if: ${{ steps.release.outputs.release_created }} && [[ [[ ${{ github.ref_name }} =~  terraform-* ]] || ${{ steps.path.outputs.release-type }} == "terraform-module" ]]
         run: |
          curl  -u ":$TOKEN"  -X POST   -H "Accept: application/vnd.github.v3+json" \

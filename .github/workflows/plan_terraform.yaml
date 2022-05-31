@@ -1,0 +1,109 @@
+name: Terraform plan on deploy branch
+
+on:
+  pull_request:
+    branches:
+      - 'deploy' 
+
+jobs:
+  set-up:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      
+         
+      - name: Set Up Terrform
+        uses: hashicorp/setup-terraform@v2
+
+      
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # OR "2" -> To retrieve the preceding commit.
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v21
+
+      - name: List all changed files
+        run: |            
+          uniques=($(for file in ${{ steps.changed-files.outputs.other_modified_files	 }}; do echo $file" if $file =~ 'terraform';done| cut -d '/' -f1-2| grep "terraform"| sort| uniq| xargs))
+          echo "::set-output name=changed_files::$uniques"
+    outputs:
+            matrix: ${{ steps.set-matrix.outputs.changed_files }}
+
+  plan:
+    needs: [ setup ]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        value: ${{fromJson(needs.setup.outputs.matrix)}}
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+
+      - name: Set environment variables
+        id:  vars
+        run: |
+              IFS='/' read -r id string <<< "${{ matrix.value }}"
+              backend=${string//[-]//_}
+              echo "::set-output name=path::$string"
+              echo "::set-output name=secret::$backend"
+
+
+      - name: create env variable
+        run: |
+            touch terraform.tfvars
+            touch backend.tfvars
+            echo -e '${{ secrets[steps.vars.outputs.secret] }}' >> terraform.tfvars
+            echo -e '${{ secrets[ TERRAFORM_BACKEND_CONFIG] }}' >> backend.tfvars
+        working-directory: ${{ matrix.value }}
+
+
+      - name: Terraform Init
+        id: Init
+        run: terraform init -backend-config="backend.tfvars" -no-color
+        working-directory: ${{ matrix.value }}
+
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate  -no-color
+        working-directory: ${{ matrix.value }}
+
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan  -no-color -input=false
+        continue-on-error: false
+        working-directory: ${{ matrix.value }}
+
+
+      - name: Update Pull Request
+        uses: actions/github-script@6
+        if: github.event_name == 'pull_request'
+        env:
+          PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+
+            <details><summary>Show Plan</summary>
+
+            \`\`\`\n
+            ${process.env.PLAN}
+            \`\`\`
+            </details>
+            *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+            github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: output
+            })

@@ -1,0 +1,78 @@
+name: Terraform deployment on deploy branch
+
+on: 
+  workflow_dispatch:
+#    inputs:
+#      environment:
+#        description: 'Environment to run tests against'
+#        type: environment
+#        required: true  
+
+jobs:
+  deploy-terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0             
+         
+      - name: Set Up Terrform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: List all terraform folders
+        run: |
+          value=$(for i in ${{ GITHUB_WORKSPACE }}/terraform/*; do echo "$i"; done | xargs)
+           echo "::set-output name=matrix::$(vendor/bin/monorepo-builder packages-json --names)"
+
+        # here, we save the result of this 1st phase to the "outputs"
+    outputs:
+        matrix: ${{ steps.set-matrix.outputs.matrix }}
+
+      
+  deploy:
+    needs: [ setup ]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        value: ${{fromJson(needs.setup.outputs.matrix)}}
+ 
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+
+      - name: Set environment variables
+        id:  vars
+        run: |
+              IFS='/' read -r id string <<< "${{ matrix.value }}"
+              backend=${string//[-]//_}
+              echo "::set-output name=path::$string"
+              echo "::set-output name=secret::$backend"
+
+
+      - name: create env variable
+        run: |
+            touch terraform.tfvars
+            touch backend.tfvars
+            echo -e '${{ secrets[steps.vars.outputs.secret] }}' >> terraform.tfvars
+            echo -e '${{ secrets[ TERRAFORM_BACKEND_CONFIG] }}' >> backend.tfvars
+        working-directory: ${{ matrix.value }}
+    
+
+      - name: Set Up Terrform
+        uses: hashicorp/setup-terraform@v2
+
+
+      - name: Terraform Init
+        id: Init
+        run: terraform init -backend-config="backend.tfvars" -no-color
+        working-directory: ${{ matrix.value }}
+
+
+      - name: Terraform Apply
+        id: apply
+        run: terraform apply -no-color
+        working-directory: ${{ matrix.value }}
+

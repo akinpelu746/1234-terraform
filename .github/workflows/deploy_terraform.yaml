@@ -1,78 +1,97 @@
-name: deploy
+name: Packages
 
-on: 
-  workflow_dispatch:
-#    inputs:
-#      environment:
-#        description: 'Environment to run tests against'
-#        type: environment
-#        required: true  
+on:
+    push:
+        paths:
+            - "src/Sylius/Bundle/**"
+            - "src/Sylius/Component/**"
+    pull_request:
+        paths:
+            - "src/Sylius/Bundle/**"
+            - "src/Sylius/Component/**"
+    release:
+        types: [created]
+    schedule:
+        -
+            cron: "0 1 * * 6" # Run at 1am every Saturday
 
 jobs:
-  deploy-terraform:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0             
-         
-      - name: Set Up Terrform
-        uses: hashicorp/setup-terraform@v2
+    list:
+        runs-on: ubuntu-latest
+        
+        name: "Create a list of packages"
+        
+        steps:
+            -   
+                uses: actions/checkout@v2
+                
+            -   
+                name: "Provide the list"
+                id: create-list
+                run: echo "::set-output name=packages::$(find src/Sylius -mindepth 3 -maxdepth 3 -type f -name composer.json -exec dirname '{}' \; | sed -e 's/src\/Sylius\///g' | sort | jq  --raw-input . | jq --slurp . | jq -c .)"
 
-      - name: List all terraform folders
-        run: |
-          value=$(for i in ${{ GITHUB_WORKSPACE }}/terraform/*; do echo "$i"; done | xargs)
-           echo "::set-output name=matrix::$(vendor/bin/monorepo-builder packages-json --names)"
+        outputs:
+            packages: "${{ steps.create-list.outputs.packages }}"
 
-        # here, we save the result of this 1st phase to the "outputs"
-    outputs:
-        matrix: ${{ steps.set-matrix.outputs.matrix }}
+    test:
+        needs: list
+        
+        runs-on: ubuntu-latest
+        
+        name: "${{ matrix.package }}, PHP ${{ matrix.php }}, Symfony ${{ matrix.symfony }}"
+        
+        strategy:
+            fail-fast: false
+            matrix:
+                php: [7.3, 7.4]
+                symfony: [4.4.*]
+                package: "${{ fromJson(needs.list.outputs.packages) }}"
+        
+        steps:
+            -   
+                uses: actions/checkout@v2
 
-      
-  deploy:
-    needs: [ setup ]
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        value: ${{fromJson(needs.setup.outputs.matrix)}}
- 
+            -   
+                name: Setup PHP
+                uses: shivammathur/setup-php@v2
+                with:
+                    php-version: "${{ matrix.php }}"
+                    coverage: none
 
-    steps:
+            -   
+                name: Get Composer cache directory
+                id: composer-cache
+                run: echo "::set-output name=dir::$(composer config cache-files-dir)"
 
-      - name: Checkout
-        uses: actions/checkout@v3
-
-
-      - name: Set environment variables
-        id:  vars
-        run: |
-              IFS='/' read -r id string <<< "${{ matrix.value }}"
-              backend=${string//[-]//_}
-              echo "::set-output name=path::$string"
-              echo "::set-output name=secret::$backend"
-
-
-      - name: create env variable
-        run: |
-            touch terraform.tfvars
-            touch backend.tfvars
-            echo -e '${{ secrets[steps.vars.outputs.secret] }}' >> terraform.tfvars
-            echo -e '${{ secrets[ TERRAFORM_BACKEND_CONFIG] }}' >> backend.tfvars
-        working-directory: ${{ matrix.value }}
-    
-
-      - name: Set Up Terrform
-        uses: hashicorp/setup-terraform@v2
-
-
-      - name: Terraform Init
-        id: Init
-        run: terraform init -backend-config="backend.tfvars" -no-color
-        working-directory: ${{ matrix.value }}
-
-
-      - name: Terraform Apply
-        id: apply
-        run: terraform apply  -var-file=terraform.tfvars -no-color
-        working-directory: ${{ matrix.value }}
-
+            -   
+                name: Cache Composer
+                uses: actions/cache@v2
+                with:
+                    path: ${{ steps.composer-cache.outputs.dir }}
+                    key: ${{ runner.os }}-php-${{ matrix.php }}-package-${{ matrix.package }}-composer-${{ hashFiles(format('src/Sylius/{0}/composer.json', matrix.package)) }}
+                    restore-keys: |
+                        ${{ runner.os }}-php-${{ matrix.php }}-package-${{ matrix.package }}-composer-
+                        ${{ runner.os }}-php-${{ matrix.php }}-package-
+            -   
+                name: Restrict Symfony version
+                if: matrix.symfony != ''
+                run: |
+                    composer global require --no-progress --no-scripts --no-plugins "symfony/flex:^1.10"
+                    composer config extra.symfony.require "${{ matrix.symfony }}"
+                working-directory: "src/Sylius/${{ matrix.package }}"
+                    
+            -
+                name: Validate composer.json
+                run: composer validate --ansi --strict
+                working-directory: "src/Sylius/${{ matrix.package }}"
+                
+            -
+                name: Install dependencies
+                run: composer install --ansi --no-interaction
+                env:
+                    COMPOSER_ROOT_VERSION: dev-master
+                working-directory: "src/Sylius/${{ matrix.package }}"
+                
+            -
+                name: Test package
+                run: bin/test-package src/Sylius/${{ matrix.package }}

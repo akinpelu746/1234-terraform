@@ -1,4 +1,4 @@
-name: Terraform deployment on deploy branch
+name: deploy
 
 on: 
   workflow_dispatch:
@@ -73,6 +73,6 @@ jobs:
 
       - name: Terraform Apply
         id: apply
-        run: terraform apply -no-color
+        run: terraform apply  -var-file=terraform.tfvars -no-color
         working-directory: ${{ matrix.value }}
 

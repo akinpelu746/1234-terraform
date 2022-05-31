@@ -3,7 +3,7 @@ name: Terraform plan on deploy branch
 on:
   pull_request:
     branches:
-      - 'deploy' 
+      - '1234-terraform' 
 
 jobs:
   set-up:
@@ -19,7 +19,7 @@ jobs:
       
       - uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # OR "2" -> To retrieve the preceding commit.
+          fetch-depth: 2  # OR "2" -> To retrieve the preceding commit.
 
       - name: Get changed files
         id: changed-files
@@ -93,6 +93,7 @@ jobs:
             #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
             #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
             #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+            ###  Directory \`${{ matrix.value }}\`
 
             <details><summary>Show Plan</summary>
 

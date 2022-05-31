@@ -78,8 +78,7 @@ jobs:
        # if: ${{ steps.release.outputs.release_created }}  
         run: |
 
-         curl  -X POST 
-         -H "Accept: application/vnd.github.v3+json" \
+         curl  -X POST -H "Accept: application/vnd.github.v3+json" \
           https://api.github.com/repos/akinpelu746/1234-terraform/actions/workflows/deploy_terraform.yaml/dispatches \
          -d '{"ref": "${{ steps.path.outputs.tag_name }}"}'
         env:
